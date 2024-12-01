@@ -1,19 +1,21 @@
 #include <iostream>
 #include <string>
+#include <vector>
 
 typedef struct {
     bool spriteF1[4][4] = {};
 }Sprite;
 
 typedef struct{
+    float f_x;
+    float f_y;
+}Force;
+
+typedef struct{
     float x;
     float y;
     float w;
     float h;
-    float dx;
-    float dy = 0;
-    float pdx;
-    float pdy;
 } Transform2D;
 
 typedef struct{
@@ -24,7 +26,12 @@ typedef struct{
     bool touchingFaces[4] = {false, false, false, false};
 } BoxCollider2D;
 
-typedef struct{
+typedef struct{ //time in x and time in y
+    float forceBufferX;
+    float accelerationX;
+    float forceBufferY;
+    float accelerationY;
+    float mass;
     float airTime;
     float accDueToGrav;
 } Rigidbody2D;
@@ -36,11 +43,25 @@ typedef struct{
     Sprite f1;
 }Object2D;
 
-void allPhysicsMath(Object2D oArray[], int n){
+void allPhysicsMath(Object2D oArray[], int n){//Edit for variable time
     for(int i = 0; i < n; i++){
-        oArray[i].rigidbody.airTime += .001;
-        oArray[i].transform.dy += (.00005) * ( oArray[i].rigidbody.accDueToGrav) * ( oArray[i].rigidbody.airTime *  oArray[i].rigidbody.airTime); // (1/2)(a)(t^2)
+        //time
+        oArray[i].rigidbody.airTime++;
+
+        //a = m/f
+        if(oArray[i].rigidbody.forceBufferX){oArray[i].rigidbody.accelerationX = oArray[i].rigidbody.mass/oArray[i].rigidbody.forceBufferX;} else{oArray[i].rigidbody.accelerationX = 0;}
+        if(oArray[i].rigidbody.forceBufferY){oArray[i].rigidbody.accelerationY = oArray[i].rigidbody.mass/oArray[i].rigidbody.forceBufferY;} else{oArray[i].rigidbody.accelerationY = 0;}
+        oArray[i].rigidbody.forceBufferX = 0.0;
+        oArray[i].rigidbody.forceBufferY = 0.0;
+
+        //x = (1/2)(a)t^2
+        oArray[i].transform.x += (1.0/2.0)*(oArray[i].rigidbody.accelerationX)*(oArray[i].rigidbody.airTime * oArray[i].rigidbody.airTime);
+        oArray[i].rigidbody.airTime = 0;
     }
+}
+
+void addForce(float magnitude, float duration){ //Force in y, integration with module time
+    objectList[0].rigidbody.forceBufferX += magnitude;
 }
 
 void allColliderMath(Object2D oArray[], int n){
@@ -52,32 +73,29 @@ void allColliderMath(Object2D oArray[], int n){
             if(j != i){
                 if(oArray[i].boxCollider.y + oArray[i].boxCollider.h >= oArray[j].boxCollider.y && oArray[i].boxCollider.y + oArray[i].boxCollider.h <= oArray[j].boxCollider.y + 1){
                     if(oArray[i].boxCollider.x + oArray[i].boxCollider.w >= oArray[j].boxCollider.x && oArray[i].boxCollider.x <= oArray[j].boxCollider.x + oArray[j].boxCollider.w){
-                        oArray[i].transform.dy = 0.0; //Grounded
                         oArray[i].rigidbody.airTime = 0.0;
                         oArray[i].boxCollider.touchingFaces[0] = true;
                     }
                 }else{
                     oArray[i].boxCollider.touchingFaces[0] = false;
                 }
-                if(oArray[i].boxCollider.y >= oArray[j].boxCollider.y + oArray[j].boxCollider.h && oArray[i].boxCollider.y <= oArray[j].boxCollider.y + oArray[j].boxCollider.h + 1 && oArray[i].transform.dy < 0){
+                if(oArray[i].boxCollider.y >= oArray[j].boxCollider.y + oArray[j].boxCollider.h && oArray[i].boxCollider.y <= oArray[j].boxCollider.y + oArray[j].boxCollider.h + 1){
                     if(oArray[i].boxCollider.x + oArray[i].boxCollider.w >= oArray[j].boxCollider.x && oArray[i].boxCollider.x <= oArray[j].boxCollider.x + oArray[j].boxCollider.w){
-                        oArray[i].transform.dy = 0.0; //Cielinged
                         oArray[i].boxCollider.touchingFaces[1] = 1;
                     }
                 }else{
                         oArray[i].boxCollider.touchingFaces[1] = 0;
                 }
-                if(oArray[i].boxCollider.x + oArray[i].boxCollider.w >= oArray[j].boxCollider.x && oArray[i].boxCollider.x + oArray[i].boxCollider.w <= oArray[j].boxCollider.x + 1 && oArray[i].transform.dx > 0){
+                if(oArray[i].boxCollider.x + oArray[i].boxCollider.w >= oArray[j].boxCollider.x && oArray[i].boxCollider.x + oArray[i].boxCollider.w <= oArray[j].boxCollider.x + 1){
                     if(oArray[i].boxCollider.x + oArray[i].boxCollider.h >= oArray[j].boxCollider.y && oArray[i].boxCollider.y <= oArray[j].boxCollider.y + oArray[j].boxCollider.h){
-                        oArray[i].transform.dx = 0.0; //Rightwalled
                         oArray[i].boxCollider.touchingFaces[2] = 1;
                     }                
                 }else{
                         oArray[i].boxCollider.touchingFaces[2] = 0;
                 }
-                if(oArray[i].boxCollider.x >= oArray[j].boxCollider.x + oArray[j].boxCollider.w && oArray[i].boxCollider.x <= oArray[j].boxCollider.x + oArray[j].boxCollider.w + 1 && oArray[i].transform.dx < 0){
+                if(oArray[i].boxCollider.x >= oArray[j].boxCollider.x + oArray[j].boxCollider.w && oArray[i].boxCollider.x <= oArray[j].boxCollider.x + oArray[j].boxCollider.w + 1){
                     if(oArray[i].boxCollider.x + oArray[i].boxCollider.h >= oArray[j].boxCollider.y && oArray[i].boxCollider.y <= oArray[j].boxCollider.y + oArray[j].boxCollider.h){
-                        oArray[i].transform.dx = 0.0; //Leftwalled
+                        //oArray[i].transform.dx = 0.0; //Leftwalled
                         oArray[i].boxCollider.touchingFaces[3] = 1;
                     }
                 }else{
@@ -85,12 +103,5 @@ void allColliderMath(Object2D oArray[], int n){
                 }
             }
         }
-    }
-}
-
-void manageTransform(Object2D oArray[], int n){
-    for(int i = 0; i < n; i++){
-        oArray[i].transform.x += oArray[i].transform.dx;
-        oArray[i].transform.y += oArray[i].transform.dy;
     }
 }
