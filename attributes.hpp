@@ -22,7 +22,6 @@ typedef struct{
     float w;
     float h;
     bool touchingFaces[4] = {false, false, false, false};
-    bool grounded = false;
 } BoxCollider2D;
 
 typedef struct{
@@ -52,15 +51,13 @@ void allColliderMath(Object2D oArray[], int n){
         for(int j = 0; j < n; j++){
             if(j != i){
                 if(oArray[i].boxCollider.y + oArray[i].boxCollider.h >= oArray[j].boxCollider.y && oArray[i].boxCollider.y + oArray[i].boxCollider.h <= oArray[j].boxCollider.y + 1){
-                    if(oArray[i].boxCollider.x + oArray[i].boxCollider.w >= oArray[j].boxCollider.x || oArray[i].boxCollider.x <= oArray[j].boxCollider.x + oArray[j].boxCollider.w){
+                    if(oArray[i].boxCollider.x + oArray[i].boxCollider.w >= oArray[j].boxCollider.x && oArray[i].boxCollider.x <= oArray[j].boxCollider.x + oArray[j].boxCollider.w){
                         oArray[i].transform.dy = 0.0; //Grounded
                         oArray[i].rigidbody.airTime = 0.0;
                         oArray[i].boxCollider.touchingFaces[0] = true;
-                        oArray[i].boxCollider.grounded = true;
                     }
                 }else{
                     oArray[i].boxCollider.touchingFaces[0] = false;
-                    oArray[i].boxCollider.grounded = false;
                 }
                 if(oArray[i].boxCollider.y >= oArray[j].boxCollider.y + oArray[j].boxCollider.h && oArray[i].boxCollider.y <= oArray[j].boxCollider.y + oArray[j].boxCollider.h + 1 && oArray[i].transform.dy < 0){
                     if(oArray[i].boxCollider.x + oArray[i].boxCollider.w >= oArray[j].boxCollider.x && oArray[i].boxCollider.x <= oArray[j].boxCollider.x + oArray[j].boxCollider.w){

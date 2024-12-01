@@ -1,99 +1,126 @@
 #include "inc/SDL.h"
 #include <iostream>
+#include <list>
+#include "attributes.hpp"
 #include "sprites.hpp"
-#include "objects.hpp"
 
 #undef main
 
+bool playerFaceDir[2] = {0, 0};
+bool playerMoveDir = 0; 
+float playerSpeedMod = 20.0; //lower number faster
+bool playerJumping = false;
+
+Object2D objectList[2] = {
+    {{5.0, 0.0, 4.0, 4.0}, {5.0, 0.0, 4.0, 4.0, false}, {0.0, .05}},
+    {{0, 150, 10, 1}, {0, 150, 10, 1}},
+    //{{50, 0, 1, 150}, {50, 0, 1, 150}},
+    //{{0, 0, 1, 150}, {0, 0, 1, 150}}
+};
+
+void drawSprite(SDL_Renderer *myRenderer){
+    for (int i = 0; i < 4; i++){
+        for (int j = 0; j < 4; j++){
+            int z = 3 - j;
+            if (objectList[0].f1.spriteF1[i][j] && playerFaceDir[0] - playerFaceDir[1] > 0){
+                SDL_RenderDrawPoint(myRenderer, int(j + objectList[0].transform.x), int(i + objectList[0].transform.y));
+            } else if (objectList[0].f1.spriteF1[i][j] && playerFaceDir[0] - playerFaceDir[1] < 0){
+                SDL_RenderDrawPoint(myRenderer, int(z + objectList[0].transform.x), int(i + objectList[0].transform.y));
+            } else if(objectList[0].f1.spriteF1[i][j] && playerMoveDir){
+                SDL_RenderDrawPoint(myRenderer, int(j + objectList[0].transform.x), int(i + objectList[0].transform.y));
+            } else if(objectList[0].f1.spriteF1[i][j] && !playerMoveDir){
+                SDL_RenderDrawPoint(myRenderer, int(z + objectList[0].transform.x), int(i + objectList[0].transform.y));
+            }
+        }
+    }
+}
+
 int main(){
+    std::ios::sync_with_stdio(false);
+
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
-
     SDL_Init(SDL_INIT_VIDEO);
     SDL_CreateWindowAndRenderer(800, 600, SDL_WINDOW_SHOWN, &window, &renderer);
-    SDL_RenderSetScale(renderer, 4, 4);
+    SDL_SetWindowTitle(window, "Little Guy");
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderClear(renderer);
+    SDL_RenderSetScale(renderer, 3, 3);
 
-    bool running = true;
-    int particleTimer = 0;
-
-    Ground g1;
-    g1.init(0, 50, 400, 50);
-    bool jumping = false;
-    while (running){
+    memcpy(objectList[0].f1.spriteF1, f1S, sizeof(objectList[0].f1.spriteF1));
+    bool gameRunning = true;
+    while(gameRunning){
         SDL_Event event;
-
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
+        //Handle Events (Key presses, mouse movement, etc.)
         while (SDL_PollEvent(&event)){
             if (event.type == SDL_QUIT){
-                running = false;
+                gameRunning = false;
             }
-            if (event.type == SDL_KEYDOWN){
+            if(event.type == SDL_KEYDOWN){
                 if (event.key.keysym.sym == SDLK_d){
-                    player.rVelocity = player.speed;
-                    player.direction = 1;
+                    playerFaceDir[0] = 1;
+                    playerMoveDir = 1;
                 }
                 if (event.key.keysym.sym == SDLK_a){
-                    player.lVelocity = -player.speed;
-                    player.direction = 0;
+                    playerFaceDir[1] = 1;
+                    playerMoveDir = 0;
                 }
-                if (event.key.keysym.sym == SDLK_SPACE){
-                    jumping = true;
+                if(event.key.keysym.sym == SDLK_SPACE){
+                    playerJumping = true;
                 }
             }
-            if (event.type == SDL_KEYUP){
-                if (event.key.keysym.sym == SDLK_d ){
-                    player.rVelocity = 0;
+            if(event.type == SDL_KEYUP){
+                if (event.key.keysym.sym == SDLK_d){
+                    playerFaceDir[0] = 0;
+
                 }
-                if(event.key.keysym.sym == SDLK_a){
-                    player.lVelocity = 0;
-                }
+                if (event.key.keysym.sym == SDLK_a){
+                    playerFaceDir[1] = 0;
+                }                
                 if (event.key.keysym.sym == SDLK_SPACE){
-                    jumping = false;
+                    //playerJumping = false;
                 }
             }
         }
-        for (int i = 0; i < 4; i++){
-                for (int j = 0; j < 4; j++){
-                    int z = 3- j;
-                    if (player.spriteF1[i][j] && player.lVelocity + player.rVelocity > 0){
-                        SDL_RenderDrawPoint(renderer, int(j + player.xPos), int(i + player.yPos));
-                    } else if (player.spriteF1[i][j] && player.lVelocity + player.rVelocity < 0){
-                        SDL_RenderDrawPoint(renderer, int(z + player.xPos), int(i + player.yPos));
-                    } else if(player.spriteF1[i][j] && player.direction){
-                        SDL_RenderDrawPoint(renderer, int(j + player.xPos), int(i + player.yPos));
-                    }else if(player.spriteF1[i][j] && !player.direction){
-                        SDL_RenderDrawPoint(renderer, int(z + player.xPos), int(i + player.yPos));
-                    }
-                }
+        objectList[0].transform.dx = (playerFaceDir[0] - playerFaceDir[1])*(1/playerSpeedMod);
+
+        //std::cout << sizeof(objectList)/56 << " " << objectList[0].boxCollider.touchingFaces[0] << '\n';
+        if(playerJumping && objectList[0].boxCollider.touchingFaces[0]){
+            objectList[0].transform.dy -= .02;
+            playerJumping = false;
         }
 
-
-        SDL_RenderDrawLine(renderer, g1.xPos, g1.yPos, g1.xPos2, g1.yPos2);
-        SDL_SetRenderDrawColor(renderer, 127, 0, 0, 90);
-
-        player.xPos += player.lVelocity + player.rVelocity;
-
-        SDL_SetRenderDrawColor(renderer, 127, 200, 127, 255);
+        //Physics/Collisions
 
 
-        if(player.grounded(g1.xPos, g1.yPos, g1.xPos2, g1.yPos2, g1.slope)){
-            player.airTime += .01;
-            player.yPos += (.0001)*player.airTime*player.airTime;
-        }else if(jumping){
-            player.yPos += -player.speed*7;
-            }
-        else{
-            player.yVeloctiy = 0;
-            player.airTime = 0;
-        } 
+        allPhysicsMath(objectList, sizeof(objectList)/56);
+
+        allColliderMath(objectList, sizeof(objectList)/56);
+        manageTransform(objectList, sizeof(objectList)/56);
+
+
+        //Drawing Area
+        //Player
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        drawSprite(renderer);
+
+        //Terrain
+        SDL_SetRenderDrawColor(renderer, 30, 128, 30, 255);
+        SDL_Rect myRect = {int(objectList[1].transform.x), int(objectList[1].transform.y), int(objectList[1].transform.w), int(objectList[1].transform.h)};
+        //SDL_Rect myRect2 = {int(objectList[2].transform.x), int(objectList[2].transform.y), int(objectList[2].transform.w), int(objectList[2].transform.h)};
+       // SDL_Rect myRect3 = {int(objectList[3].transform.x), int(objectList[3].transform.y), int(objectList[3].transform.w), int(objectList[3].transform.h)};
+        SDL_RenderDrawRect(renderer, &myRect);
+        //SDL_RenderDrawRect(renderer, &myRect2);
+        //SDL_RenderDrawRect(renderer, &myRect3);
+        SDL_SetRenderDrawColor(renderer, 0, 127, 0, 50);
+        /*SDL_RenderDrawPoint(renderer, objectList[0].boxCollider.x, objectList[0].boxCollider.y);
+        SDL_RenderDrawPoint(renderer, objectList[0].boxCollider.x + 3, objectList[0].boxCollider.y);
+        SDL_RenderDrawPoint(renderer, objectList[0].boxCollider.x + 3, objectList[0].boxCollider.y + 3);
+        SDL_RenderDrawPoint(renderer, objectList[0].boxCollider.x, objectList[0].boxCollider.y + 3);*/
 
         SDL_RenderPresent(renderer);
-
     }
 
     SDL_DestroyWindow(window);
