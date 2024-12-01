@@ -11,11 +11,11 @@ bool playerMoveDir = 0;
 float playerSpeedMod = 20.0; //lower number faster
 bool playerJumping = false;
 
-Object2D objectList[4] = {
-    {{0.0, 0.0, 4.0, 4.0}, {0.0, 0.0, 4.0, 4.0, false}, {0.0, .05}},
+Object2D objectList[2] = {
+    {{5.0, 0.0, 4.0, 4.0}, {5.0, 0.0, 4.0, 4.0, false}, {0.0, .05}},
     {{0, 150, 399, 1}, {0, 150, 399, 1}},
-    {{50, 0, 1, 50}, {50, 0, 1, 50}},
-    {{-1, 0, 1, 50}, {-1, 0, 1, 50}}
+    //{{50, 0, 1, 150}, {50, 0, 1, 150}},
+    //{{0, 0, 1, 150}, {0, 0, 1, 150}}
 };
 
 void drawSprite(SDL_Renderer *myRenderer){
@@ -78,25 +78,28 @@ int main(){
                 }
                 if (event.key.keysym.sym == SDLK_a){
                     playerFaceDir[1] = 0;
+                }                
+                if (event.key.keysym.sym == SDLK_SPACE){
+                    //playerJumping = false;
                 }
             }
         }
         objectList[0].transform.dx = (playerFaceDir[0] - playerFaceDir[1])*(1/playerSpeedMod);
 
-
-        //Physics/Collisions
-        allPhysicsMath(objectList, sizeof(objectList)/56);
-
-        allColliderMath(objectList, sizeof(objectList)/56);
-
-        std::cout << objectList[0].transform.dy << " " << playerJumping << " " << objectList[0].boxCollider.grounded << '\n';
-        if(playerJumping && objectList[0].boxCollider.grounded){
-            objectList[0].transform.dy -= .05;
-            std::cout << "penis" << '\n';
+        //std::cout << sizeof(objectList)/56 << " " << objectList[0].boxCollider.touchingFaces[0] << '\n';
+        if(playerJumping && objectList[0].boxCollider.touchingFaces[0]){
+            objectList[0].transform.dy -= .02;
             playerJumping = false;
         }
 
+        //Physics/Collisions
+
+
+        allPhysicsMath(objectList, sizeof(objectList)/56);
+
+        allColliderMath(objectList, sizeof(objectList)/56);
         manageTransform(objectList, sizeof(objectList)/56);
+
 
         //Drawing Area
         //Player
@@ -106,11 +109,11 @@ int main(){
         //Terrain
         SDL_SetRenderDrawColor(renderer, 30, 128, 30, 255);
         SDL_Rect myRect = {int(objectList[1].transform.x), int(objectList[1].transform.y), int(objectList[1].transform.w), int(objectList[1].transform.h)};
-        SDL_Rect myRect2 = {int(objectList[2].transform.x), int(objectList[2].transform.y), int(objectList[2].transform.w), int(objectList[2].transform.h)};
-        SDL_Rect myRect3 = {int(objectList[3].transform.x), int(objectList[3].transform.y), int(objectList[3].transform.w), int(objectList[3].transform.h)};
+        //SDL_Rect myRect2 = {int(objectList[2].transform.x), int(objectList[2].transform.y), int(objectList[2].transform.w), int(objectList[2].transform.h)};
+       // SDL_Rect myRect3 = {int(objectList[3].transform.x), int(objectList[3].transform.y), int(objectList[3].transform.w), int(objectList[3].transform.h)};
         SDL_RenderDrawRect(renderer, &myRect);
-        SDL_RenderDrawRect(renderer, &myRect2);
-        SDL_RenderDrawRect(renderer, &myRect2);
+        //SDL_RenderDrawRect(renderer, &myRect2);
+        //SDL_RenderDrawRect(renderer, &myRect3);
         SDL_SetRenderDrawColor(renderer, 0, 127, 0, 50);
         /*SDL_RenderDrawPoint(renderer, objectList[0].boxCollider.x, objectList[0].boxCollider.y);
         SDL_RenderDrawPoint(renderer, objectList[0].boxCollider.x + 3, objectList[0].boxCollider.y);

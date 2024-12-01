@@ -21,6 +21,7 @@ typedef struct{
     float y;
     float w;
     float h;
+    bool touchingFaces[4] = {false, false, false, false};
     bool grounded = false;
 } BoxCollider2D;
 
@@ -38,12 +39,8 @@ typedef struct{
 
 void allPhysicsMath(Object2D oArray[], int n){
     for(int i = 0; i < n; i++){
-        if(!oArray[i].boxCollider.grounded){
-            oArray[i].rigidbody.airTime += .001;
-            oArray[i].transform.dy = (.5) * ( oArray[i].rigidbody.accDueToGrav) * ( oArray[i].rigidbody.airTime *  oArray[i].rigidbody.airTime); // (1/2)(a)(t^2)
-        }else{
-            oArray[i].rigidbody.airTime = 0;
-        }
+        oArray[i].rigidbody.airTime += .001;
+        oArray[i].transform.dy += (.00005) * ( oArray[i].rigidbody.accDueToGrav) * ( oArray[i].rigidbody.airTime *  oArray[i].rigidbody.airTime); // (1/2)(a)(t^2)
     }
 }
 
@@ -54,34 +51,41 @@ void allColliderMath(Object2D oArray[], int n){
         oArray[i].boxCollider.y = oArray[i].transform.y;
         for(int j = 0; j < n; j++){
             if(j != i){
-                if(oArray[i].boxCollider.y + oArray[i].boxCollider.h >= oArray[j].boxCollider.y && oArray[i].boxCollider.y + oArray[i].boxCollider.h <= oArray[j].boxCollider.y + 1 ){
-                    if(oArray[i].boxCollider.x + oArray[i].boxCollider.w >= oArray[j].boxCollider.x && oArray[i].boxCollider.x <= oArray[j].boxCollider.x + oArray[j].boxCollider.w){
-                        //oArray[i].transform.dy = 0; //Grounded
+                if(oArray[i].boxCollider.y + oArray[i].boxCollider.h >= oArray[j].boxCollider.y && oArray[i].boxCollider.y + oArray[i].boxCollider.h <= oArray[j].boxCollider.y + 1){
+                    if(oArray[i].boxCollider.x + oArray[i].boxCollider.w >= oArray[j].boxCollider.x || oArray[i].boxCollider.x <= oArray[j].boxCollider.x + oArray[j].boxCollider.w){
+                        oArray[i].transform.dy = 0.0; //Grounded
+                        oArray[i].rigidbody.airTime = 0.0;
+                        oArray[i].boxCollider.touchingFaces[0] = true;
                         oArray[i].boxCollider.grounded = true;
-                        state += " Grounded";
-                    }else{
-                        oArray[i].boxCollider.grounded = false;
                     }
+                }else{
+                    oArray[i].boxCollider.touchingFaces[0] = false;
+                    oArray[i].boxCollider.grounded = false;
                 }
-                if(oArray[i].boxCollider.y >= oArray[j].boxCollider.y + oArray[j].boxCollider.h && oArray[i].boxCollider.y <= oArray[j].boxCollider.y + oArray[j].boxCollider.h + 1){
+                if(oArray[i].boxCollider.y >= oArray[j].boxCollider.y + oArray[j].boxCollider.h && oArray[i].boxCollider.y <= oArray[j].boxCollider.y + oArray[j].boxCollider.h + 1 && oArray[i].transform.dy < 0){
                     if(oArray[i].boxCollider.x + oArray[i].boxCollider.w >= oArray[j].boxCollider.x && oArray[i].boxCollider.x <= oArray[j].boxCollider.x + oArray[j].boxCollider.w){
                         oArray[i].transform.dy = 0.0; //Cielinged
-                        state += " Cielinged";
+                        oArray[i].boxCollider.touchingFaces[1] = 1;
                     }
+                }else{
+                        oArray[i].boxCollider.touchingFaces[1] = 0;
                 }
                 if(oArray[i].boxCollider.x + oArray[i].boxCollider.w >= oArray[j].boxCollider.x && oArray[i].boxCollider.x + oArray[i].boxCollider.w <= oArray[j].boxCollider.x + 1 && oArray[i].transform.dx > 0){
                     if(oArray[i].boxCollider.x + oArray[i].boxCollider.h >= oArray[j].boxCollider.y && oArray[i].boxCollider.y <= oArray[j].boxCollider.y + oArray[j].boxCollider.h){
                         oArray[i].transform.dx = 0.0; //Rightwalled
-                        state += " Rightwalled";
+                        oArray[i].boxCollider.touchingFaces[2] = 1;
                     }                
+                }else{
+                        oArray[i].boxCollider.touchingFaces[2] = 0;
                 }
                 if(oArray[i].boxCollider.x >= oArray[j].boxCollider.x + oArray[j].boxCollider.w && oArray[i].boxCollider.x <= oArray[j].boxCollider.x + oArray[j].boxCollider.w + 1 && oArray[i].transform.dx < 0){
                     if(oArray[i].boxCollider.x + oArray[i].boxCollider.h >= oArray[j].boxCollider.y && oArray[i].boxCollider.y <= oArray[j].boxCollider.y + oArray[j].boxCollider.h){
                         oArray[i].transform.dx = 0.0; //Leftwalled
-                        state += " Leftwalled";
+                        oArray[i].boxCollider.touchingFaces[3] = 1;
                     }
+                }else{
+                        oArray[i].boxCollider.touchingFaces[3] = 0;
                 }
-                //std::cout << state << '\n';
             }
         }
     }
