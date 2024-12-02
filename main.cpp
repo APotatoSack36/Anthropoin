@@ -104,7 +104,7 @@ int main(){
 
         allColliderMath(objectList, sizeof(objectList)/56);
         allPhysicsMath(objectList, sizeof(objectList)/56);
-        std::cout <<  objectList[0].boxCollider.touchingFaces[0] << std::endl;
+        std::cout << objectList[0].transform.y << " " << objectList[0].boxCollider.touchingFaces[0] << std::endl;
 
 
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
