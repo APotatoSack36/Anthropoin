@@ -11,11 +11,11 @@ bool playerMoveDir = 0;
 float playerSpeedMod = 120.0; //lower number faster
 bool playerJumping = false;
 bool lastPlayerJumping = false;
-float playerJumpForce = -140;
+float playerJumpForce = 0;
 float keyTimes[2] = {0.0, 0.0};
 
 Object2D objectList[4] = {
-    {{5.0, 50.0, 4.0, 4.0}, {5.0, 50.0, 4.0, 4.0, false}, {0.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, .000001, true, 50}},
+    {{5.0, 50.0, 4.0, 4.0}, {5.0, 50.0, 4.0, 4.0, false}, {0.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, true, 5}},
     {{0, 100, 300, 1}, {0, 100, 300, 1}},
     {{0, 0, 1, 300}, {0, 0, 1, 300}},
     {{20, 0, 1, 300}, {20, 0, 1, 300}}
@@ -96,15 +96,14 @@ int main(){
             keyTimes[0] = 0.0;
         }
 
-        /*if(playerJumping){
-            keyTimes[1] = .005;
-            playerJumpForce -= 10.0;
+        if(playerJumping && playerJumpForce > -20){
+            playerJumpForce -= 2;
         }else{
-            keyTimes[1] = 0.0;
-            playerJumpForce = 0.0;
-        }*/
-        std::cout <<  objectList[0].rigidbody.forceBufferY << std::endl;
-        addForce(objectList[0], 0.0, playerJumpForce, 0.0, 0);
+            playerJumping = false;
+            playerJumpForce = 0;
+        }
+        addForce(objectList[0], 0.0, playerJumpForce, 0.0, 1);
+        std::cout <<  playerJumpForce << std::endl;
 
 
 
