@@ -11,8 +11,9 @@ bool playerMoveDir = 0;
 float playerSpeedMod = 120.0; //lower number faster
 bool playerJumping = false;
 bool lastPlayerJumping = false;
-float playerJumpForce = 0;
+float playerJumpForce = -100.0;
 float keyTimes[2] = {0.0, 0.0};
+float jumpTime = 0.0;
 
 Object2D objectList[4] = {
     {{5.0, 50.0, 4.0, 4.0}, {5.0, 50.0, 4.0, 4.0, false}, {0.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, true, 5}},
@@ -56,6 +57,7 @@ int main(){
         SDL_Event event;
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
+        forceLoop(objectList, sizeof(objectList)/56);
 
         //Handle Events (Key presses, mouse movement, etc.)
         while (SDL_PollEvent(&event)){
@@ -91,24 +93,18 @@ int main(){
 
         if((playerFaceDir[0] - playerFaceDir[1])*50.0){
             keyTimes[0] += .005;
-            addForce(objectList[0], (playerFaceDir[0] - playerFaceDir[1])*50.0, 0, keyTimes[0], 0);
+            addForce(objectList[0], (playerFaceDir[0] - playerFaceDir[1])*100.0, 0);
         }else{
             keyTimes[0] = 0.0;
         }
 
-        if(playerJumping && playerJumpForce > -20){
-            playerJumpForce -= 2;
-        }else{
-            playerJumping = false;
-            playerJumpForce = 0;
+        if(playerJumping && playerJumpForce < 0.0){
+            addForce(objectList[0], 0.0, playerJumpForce);
         }
-        addForce(objectList[0], 0.0, playerJumpForce, 0.0, 1);
-        std::cout <<  playerJumpForce << std::endl;
-
-
 
         allColliderMath(objectList, sizeof(objectList)/56);
         allPhysicsMath(objectList, sizeof(objectList)/56);
+        std::cout <<  objectList[0].boxCollider.touchingFaces[0] << std::endl;
 
 
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
