@@ -10,12 +10,15 @@ bool playerFaceDir[2] = {0, 0};
 bool playerMoveDir = 0; 
 float playerSpeedMod = 120.0; //lower number faster
 bool playerJumping = false;
-
+bool lastPlayerJumping = false;
+float playerJumpForce = -140;
 float keyTimes[2] = {0.0, 0.0};
 
-Object2D objectList[2] = {
-    {{5.0, 0.0, 4.0, 4.0}, {5.0, 0.0, 4.0, 4.0, false}, {0.0, 0.0, 0.0, 0.0, 5.0, 0.0, .000005}},
-    {{0, 150, 40, 1}, {0, 150, 40, 1}},
+Object2D objectList[4] = {
+    {{5.0, 50.0, 4.0, 4.0}, {5.0, 50.0, 4.0, 4.0, false}, {0.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, .000001, true, 50}},
+    {{0, 100, 300, 1}, {0, 100, 300, 1}},
+    {{0, 0, 1, 300}, {0, 0, 1, 300}},
+    {{20, 0, 1, 300}, {20, 0, 1, 300}}
 };
 
 void drawSprite(SDL_Renderer *myRenderer){
@@ -49,6 +52,7 @@ int main(){
     memcpy(objectList[0].f1.spriteF1, f1S, sizeof(objectList[0].f1.spriteF1));
     bool gameRunning = true;
     while(gameRunning){
+        lastPlayerJumping = playerJumping;
         SDL_Event event;
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
@@ -61,12 +65,10 @@ int main(){
             if(event.type == SDL_KEYDOWN){
                 if (event.key.keysym.sym == SDLK_d){
                     playerFaceDir[0] = 1;
-                    keyTimes[0] += .05;
                     playerMoveDir = 1;
                 }
                 if (event.key.keysym.sym == SDLK_a){
                     playerFaceDir[1] = 1;
-                    keyTimes[0] += .05;
                     playerMoveDir = 0;
                 }
                 if(event.key.keysym.sym == SDLK_SPACE){
@@ -80,15 +82,34 @@ int main(){
                 }
                 if (event.key.keysym.sym == SDLK_a){
                     playerFaceDir[1] = 0;
-                }                
-
+                }        
+                if(event.key.keysym.sym == SDLK_SPACE){
+                    playerJumping = false;
+                }        
             }
         }
 
-        objectList[0].rigidbody.forceBufferX += ((playerFaceDir[0] - playerFaceDir[1])*50.0);
+        if((playerFaceDir[0] - playerFaceDir[1])*50.0){
+            keyTimes[0] += .005;
+            addForce(objectList[0], (playerFaceDir[0] - playerFaceDir[1])*50.0, 0, keyTimes[0], 0);
+        }else{
+            keyTimes[0] = 0.0;
+        }
+
+        /*if(playerJumping){
+            keyTimes[1] = .005;
+            playerJumpForce -= 10.0;
+        }else{
+            keyTimes[1] = 0.0;
+            playerJumpForce = 0.0;
+        }*/
+        std::cout <<  objectList[0].rigidbody.forceBufferY << std::endl;
+        addForce(objectList[0], 0.0, playerJumpForce, 0.0, 0);
+
+
+
+        allColliderMath(objectList, sizeof(objectList)/56);
         allPhysicsMath(objectList, sizeof(objectList)/56);
-        std::cout << objectList[0].rigidbody.accelerationX << std::endl;
-        //allColliderMath(objectList, sizeof(objectList)/56);
 
 
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
@@ -97,8 +118,12 @@ int main(){
         //Terrain
         SDL_SetRenderDrawColor(renderer, 30, 128, 30, 255);
         SDL_Rect myRect = {int(objectList[1].transform.x), int(objectList[1].transform.y), int(objectList[1].transform.w), int(objectList[1].transform.h)};
+        SDL_Rect myRect2 = {int(objectList[2].transform.x), int(objectList[2].transform.y), int(objectList[2].transform.w), int(objectList[2].transform.h)};
+        SDL_Rect myRect3 = {int(objectList[3].transform.x), int(objectList[3].transform.y), int(objectList[3].transform.w), int(objectList[3].transform.h)};
 
         SDL_RenderDrawRect(renderer, &myRect);
+        SDL_RenderDrawRect(renderer, &myRect2);
+        SDL_RenderDrawRect(renderer, &myRect3);
 
         SDL_SetRenderDrawColor(renderer, 0, 127, 0, 50);
 
