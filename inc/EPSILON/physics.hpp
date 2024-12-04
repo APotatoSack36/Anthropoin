@@ -78,6 +78,10 @@ void allPhysicsMath(Object2D oArray[], int n){//Edit for variable time
     }
 }
 
+bool accelerationDueToGravity = 9.8;
+void pointPhysics(float x, float y, float mass){
+    float force = accelerationDueToGravity*mass;
+}
 
 void allColliderMath(Object2D oArray[], int n){
     std::string state;

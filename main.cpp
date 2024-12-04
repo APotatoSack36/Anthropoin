@@ -1,7 +1,7 @@
-#include "inc/SDL.h"
+#include "SDL2/SDL.h"
 #include <iostream>
 #include <list>
-#include "attributes.hpp"
+#include "EPSILON/engine.hpp"
 #include "sprites.hpp"
 
 #undef main
